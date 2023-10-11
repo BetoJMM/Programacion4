@@ -1,87 +1,72 @@
 import sqlite3
 
-conn = sqlite3.connect('diccionario.db')
-print("Base de datos abierta con exito!")
-
+conn = sqlite3.connect('baseslang.db')
+print("\nCrear base de datos")
 conn.execute('''CREATE TABLE IF NOT EXISTS DICCIONARIO
-            (PALABRA TEXT PRIMARY KEY NOT NULL,
-            SIGNIFICADO TEXT NOT NULL );''')
-
-print("Tabla creada")
+                   (ID INT PRIMARY KEY NOT NULL,
+                    PALABRA TEXT NOT NULL,
+                    SIGNIFICADO TEXT NOT NULL);''')
 
 while True:
-    print("\n\nMENU - SISTEMA ALQUILER")
-    print("1. Agregar nueva palabra")
+
+    print("\n1. Agregar nueva palabra")
     print("2. Editar palabra existente")
     print("3. Eliminar palabra existente")
     print("4. Ver listado de palabras")
     print("5. Buscar significado de palabra")
     print("6. Salir")
-    try:
-        opcion = int(input("Opcion: "))
+
+    try: 
+        opcion = int(input("\nOpcion: "))
     except:
-        print("ERR::Opcion invalida")
-        opcion = 999
+        opcion = 99999
+
     if opcion == 1:
-        print("Vamos a agregar palabra al diccionario...")
-        palabra = input("La nueva palabra es: ")
-        significado = input("El significado de la palabra es: ")
+        print("\n Agregar nueva palabra")
+        id = input("ID: ")
+        palabra = input("Nombre de la palabra nueva: ")
+        signficado = input("Significado: ")
+        conn.execute("INSERT INTO DICCIONARIO(ID,PALABRA, SIGNIFICADO) VALUES("+id+",\""+palabra+"\", \""+signficado+"\")")
+        conn.commit()
+        
+    elif opcion == 2:
+        print("\n Editar palabra existente")
+        cursor = conn.execute("SELECT ID, PALABRA FROM DICCIONARIO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]))
+        por_actualizar = input("Inserte ID de la palabra por actualizar... ")
+        nueva_palabra = input("Inserte la nueva palabra del DICCIONARIO... ")
+        nuevo_significado = input("Inserte nuevo significado: ")
+        conn.execute("UPDATE DICCIONARIO SET PALABRA = ?,SIGNIFICADO=? WHERE ID=?",(nueva_palabra,nuevo_significado,por_actualizar))
+        conn.commit()
+    elif opcion == 3:
+        print("\n Eliminar palabra existente")
+        cursor = conn.execute("SELECT ID, PALABRA FROM DICCIONARIO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]))
         try:
-            conn.execute("INSERT INTO DICCIONARIO VALUES(?,?)",(palabra,significado))
-            conn.commit()
+            por_eliminar = int(input("Inserte ID la PALABRA a borrar... "))
         except:
-            print("ERR:: Palabra ya existente, intenta otro")
-    if opcion == 2:
-        print("Vamos a editar palabra existente...")
-        diccionarios = conn.execute("SELECT * FROM DICCIONARIO")
-        for diccionario in diccionarios:
-            print(str(diccionario[0])+": "+str(diccionario[1]) )
-        palabraelegida = input("Palabra a editar: ")
-        palabra = input("Nueva palabra: ")
-        significado = input("Nuevo Significado: ")
-        try:
-            conn.execute("UPDATE DICCIONARIO SET PALABRA = ?,SIGNIFICADO=? WHERE PALABRA=?",(palabra,significado,palabraelegida))
-            conn.commit()
-        except:
-            print("ERR:: Error con la palabra")
-    if opcion == 3:
-        print("Vamos a eliminar palabra existente...")
-        diccionarios = conn.execute("SELECT * FROM DICCIONARIO")
-        for diccionario in diccionarios:
-            print(str(diccionario[0])+": "+str(diccionario[1]) )
-        palabraelegida = str(input("Seleccione la palabra ha eliminar: "))
-        stat_je = conn.execute("SELECT * FROM DICCIONARIO WHERE PALABRA = " + str(palabraelegida))
-        print("elegido")
-        num_s_je = len(stat_je.fetchall())
-        if num_s_je == 0:
-            print("ERR::Palabra no existe")
-            continue
-        else:
-            conn.execute("DELETE FROM DICCIONARIO WHERE PALABRA = " + str(palabraelegida))
-            conn.commit()
-            print("Palabra eliminada con éxito: ")
-    if opcion == 4:
-        print("Vamos a ver listado de palabras...")
-        diccionarios = conn.execute("SELECT * FROM DICCIONARIO")
-        for diccionario in diccionarios:
-            print(str(diccionario[0])+": "+str(diccionario[1]) )
-    if opcion == 5:
-        print("Vamos a buscar significado de palabra...")
-        diccionarios = conn.execute("SELECT * FROM DICCIONARIO")
-        for diccionario in diccionarios:
-            print(str(diccionario[0])) 
-        palabraelegida = input("Seleccione la palabra para su significado: ")
-        try:
-            diccionarios = conn.execute("SELECT * FROM DICCIONARIO")
-            for diccionario in diccionarios:
-                if palabraelegida == diccionario[0]:
-                    print(str(diccionario[0])+": "+str(diccionario[1]) )
-            conn.commit()
-        except:
-            print("ERR:: Error con la palabra")
-    if opcion ==6:
-        print("Saliendo del diccionario panameno...")
-        exit()
-
-
+            por_eliminar = 999999
+        conn.execute("DELETE FROM DICCIONARIO WHERE ID = " + str(por_eliminar ))
+        conn.commit()
+    
+    elif opcion == 4:
+        print("\n Ver listado de palabras")
+        cursor = conn.execute("SELECT ID, PALABRA, SIGNIFICADO FROM DICCIONARIO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]))
+    elif opcion ==5:
+        print("\n Buscar significado de palabra")
+        cursor = conn.execute("SELECT ID, PALABRA, SIGNIFICADO FROM DICCIONARIO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]) + " = "+str(row[2]))
+    elif opcion ==6:
+        print("\n Salir")
+        break
+               
+else:
+    print("\nERR: Opcion no valida")
+    
+    
 conn.close()

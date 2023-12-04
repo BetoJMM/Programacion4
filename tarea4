@@ -1,0 +1,77 @@
+import redis
+
+# Conectar a Redis
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+while True:
+    print("\n1. Agregar nueva palabra")
+    print("2. Editar palabra existente")
+    print("3. Eliminar palabra existente")
+    print("4. Ver listado de palabras")
+    print("5. Buscar significado de palabra")
+    print("6. Salir")
+
+    try:
+        opcion = int(input("\nOpcion: "))
+    except ValueError:
+        opcion = 99999
+
+    if opcion == 1:
+        print("\nAgregar nueva palabra")
+        palabra = input("Nombre de la palabra nueva: ")
+        significado = input("Significado: ")
+        palabra_id = redis_client.incr("palabra_id")  # Generar un nuevo ID único
+        redis_client.hset(f"palabra:{palabra_id}", "palabra", palabra)
+        redis_client.hset(f"palabra:{palabra_id}", "significado", significado)
+        
+    elif opcion == 2:
+        print("\nEditar palabra existente")
+        palabras_ids = redis_client.keys("palabra:*")
+        for palabra_id in palabras_ids:
+            palabra_data = redis_client.hgetall(palabra_id)
+            print(f"{palabra_id.decode('utf-8')}. {palabra_data['palabra'].decode('utf-8')}")
+        por_actualizar = input("Inserte ID de la palabra por actualizar... ")
+        palabra_data = redis_client.hgetall(f"palabra:{por_actualizar}")
+        if palabra_data:
+            nueva_palabra = input("Inserte la nueva palabra del diccionario... ")
+            nuevo_significado = input("Inserte nuevo significado: ")
+            redis_client.hset(f"palabra:{por_actualizar}", "palabra", nueva_palabra)
+            redis_client.hset(f"palabra:{por_actualizar}", "significado", nuevo_significado)
+        else:
+            print("ID no válido")
+
+    elif opcion == 3:
+        print("\nEliminar palabra existente")
+        palabras_ids = redis_client.keys("palabra:*")
+        for palabra_id in palabras_ids:
+            palabra_data = redis_client.hgetall(palabra_id)
+            print(f"{palabra_id.decode('utf-8')}. {palabra_data['palabra'].decode('utf-8')}")
+        try:
+            por_eliminar = input("Inserte ID de la palabra a borrar... ")
+            redis_client.delete(f"palabra:{por_eliminar}")
+        except ValueError:
+            print("ID no válido")
+
+    elif opcion == 4:
+        print("\nVer listado de palabras")
+        palabras_ids = redis_client.keys("palabra:*")
+        for palabra_id in palabras_ids:
+            palabra_data = redis_client.hgetall(palabra_id)
+            print(f"{palabra_id.decode('utf-8')}. {palabra_data['palabra'].decode('utf-8')}")
+
+    elif opcion == 5:
+        print("\nBuscar significado de palabra")
+        palabras_ids = redis_client.keys("palabra:*")
+        for palabra_id in palabras_ids:
+            palabra_data = redis_client.hgetall(palabra_id)
+            print(f"{palabra_id.decode('utf-8')}. {palabra_data['palabra'].decode('utf-8')} = {palabra_data['significado'].decode('utf-8')}")
+
+    elif opcion == 6:
+        print("\nSalir")
+        break
+
+    else:
+        print("\nERR: Opción no válida")
+
+# Cerrar la conexión a Redis (opcional en este caso)
+redis_client.close()

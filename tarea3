@@ -1,0 +1,76 @@
+import pymongo
+
+# Conectar a MongoDB
+client = pymongo.MongoClient("mongodb://usuario:contraseña@localhost:27017/")
+db = client["baseslang"]
+diccionario_collection = db["diccionario"]
+
+while True:
+    print("\n1. Agregar nueva palabra")
+    print("2. Editar palabra existente")
+    print("3. Eliminar palabra existente")
+    print("4. Ver listado de palabras")
+    print("5. Buscar significado de palabra")
+    print("6. Salir")
+
+    try:
+        opcion = int(input("\nOpcion: "))
+    except ValueError:
+        opcion = 99999
+
+    if opcion == 1:
+        print("\nAgregar nueva palabra")
+        palabra = input("Nombre de la palabra nueva: ")
+        significado = input("Significado: ")
+        nueva_palabra = {"palabra": palabra, "significado": significado}
+        diccionario_collection.insert_one(nueva_palabra)
+        
+    elif opcion == 2:
+        print("\nEditar palabra existente")
+        palabras = diccionario_collection.find()
+        for palabra in palabras:
+            print(f"{palabra['_id']}. {palabra['palabra']}")
+        por_actualizar = input("Inserte ID de la palabra por actualizar... ")
+        palabra = diccionario_collection.find_one({"_id": int(por_actualizar)})
+        if palabra:
+            nueva_palabra = input("Inserte la nueva palabra del diccionario... ")
+            nuevo_significado = input("Inserte nuevo significado: ")
+            diccionario_collection.update_one(
+                {"_id": palabra["_id"]},
+                {"$set": {"palabra": nueva_palabra, "significado": nuevo_significado}}
+            )
+        else:
+            print("ID no válido")
+
+    elif opcion == 3:
+        print("\nEliminar palabra existente")
+        palabras = diccionario_collection.find()
+        for palabra in palabras:
+            print(f"{palabra['_id']}. {palabra['palabra']}")
+        try:
+            por_eliminar = int(input("Inserte ID de la palabra a borrar... "))
+        except ValueError:
+            por_eliminar = 999999
+        diccionario_collection.delete_one({"_id": por_eliminar})
+
+    elif opcion == 4:
+        print("\nVer listado de palabras")
+        palabras = diccionario_collection.find()
+        for palabra in palabras:
+            print(f"{palabra['_id']}. {palabra['palabra']}")
+
+    elif opcion == 5:
+        print("\nBuscar significado de palabra")
+        palabras = diccionario_collection.find()
+        for palabra in palabras:
+            print(f"{palabra['_id']}. {palabra['palabra']} = {palabra['significado']}")
+
+    elif opcion == 6:
+        print("\nSalir")
+        break
+
+    else:
+        print("\nERR: Opción no válida")
+
+# Cerrar la conexión a MongoDB (opcional en este caso)
+client.close()

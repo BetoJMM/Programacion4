@@ -1,0 +1,100 @@
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# Configuración de conexión a MariaDB
+DATABASE_URL = "mysql+mysqlconnector://usuario:contraseña@localhost/nombre_de_base_de_datos"
+engine = create_engine(DATABASE_URL)
+
+# Declaración de la base para definir modelos
+Base = declarative_base()
+
+# Definición del modelo Palabra
+class Palabra(Base):
+    __tablename__ = 'diccionario'
+
+    id = Column(Integer, primary_key=True)
+    palabra = Column(String, nullable=False)
+    significado = Column(String, nullable=False)
+
+# Crear las tablas en la base de datos
+Base.metadata.create_all(engine)
+
+# Crear una sesión para interactuar con la base de datos
+Session = sessionmaker(bind=engine)
+session = Session()
+
+while True:
+    print("\n1. Agregar nueva palabra")
+    print("2. Editar palabra existente")
+    print("3. Eliminar palabra existente")
+    print("4. Ver listado de palabras")
+    print("5. Buscar significado de palabra")
+    print("6. Salir")
+
+    try:
+        opcion = int(input("\nOpcion: "))
+    except ValueError:
+        opcion = 99999
+
+    if opcion == 1:
+        print("\nAgregar nueva palabra")
+        palabra = input("Nombre de la palabra nueva: ")
+        significado = input("Significado: ")
+        nueva_palabra = Palabra(palabra=palabra, significado=significado)
+        session.add(nueva_palabra)
+        session.commit()
+
+    elif opcion == 2:
+        print("\nEditar palabra existente")
+        palabras = session.query(Palabra).all()
+        for palabra in palabras:
+            print(f"{palabra.id}. {palabra.palabra}")
+        por_actualizar = input("Inserte ID de la palabra por actualizar... ")
+        palabra = session.query(Palabra).get(por_actualizar)
+        if palabra:
+            nueva_palabra = input("Inserte la nueva palabra del diccionario... ")
+            nuevo_significado = input("Inserte nuevo significado: ")
+            palabra.palabra = nueva_palabra
+            palabra.significado = nuevo_significado
+            session.commit()
+        else:
+            print("ID no válido")
+
+    elif opcion == 3:
+        print("\nEliminar palabra existente")
+        palabras = session.query(Palabra).all()
+        for palabra in palabras:
+            print(f"{palabra.id}. {palabra.palabra}")
+        try:
+            por_eliminar = int(input("Inserte ID de la palabra a borrar... "))
+        except ValueError:
+            por_eliminar = 999999
+        palabra = session.query(Palabra).get(por_eliminar)
+        if palabra:
+            session.delete(palabra)
+            session.commit()
+        else:
+            print("ID no válido")
+
+    elif opcion == 4:
+        print("\nVer listado de palabras")
+        palabras = session.query(Palabra).all()
+        for palabra in palabras:
+            print(f"{palabra.id}. {palabra.palabra}")
+
+    elif opcion == 5:
+        print("\nBuscar significado de palabra")
+        palabras = session.query(Palabra).all()
+        for palabra in palabras:
+            print(f"{palabra.id}. {palabra.palabra} = {palabra.significado}")
+
+    elif opcion == 6:
+        print("\nSalir")
+        break
+
+    else:
+        print("\nERR: Opción no válida")
+
+# Cerrar la sesión
+session.close()

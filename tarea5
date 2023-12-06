@@ -1,0 +1,55 @@
+from flask import Flask, render_template, request, redirect
+
+app = Flask(__name__)
+client = pymongo.MongoClient("mongodb://usuario:contraseña@localhost:27017/")
+db = client["baseslang"]
+diccionario_collection = db["diccionario"]
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/agregar', methods=['POST'])
+def agregar_palabra():
+    palabra = request.form['palabra']
+    significado = request.form['significado']
+    nueva_palabra = {"palabra": palabra, "significado": significado}
+    diccionario_collection.insert_one(nueva_palabra)
+    return redirect('/')
+
+@app.route('/editar', methods=['POST'])
+def editar_palabra():
+    por_actualizar = request.form['id_actualizar']
+    palabra = diccionario_collection.find_one({"_id": int(por_actualizar)})
+    
+    if palabra:
+        nueva_palabra = request.form['nueva_palabra']
+        nuevo_significado = request.form['nuevo_significado']
+        diccionario_collection.update_one(
+            {"_id": palabra["_id"]},
+            {"$set": {"palabra": nueva_palabra, "significado": nuevo_significado}}
+        )
+
+    return redirect('/')
+
+@app.route('/eliminar', methods=['POST'])
+def eliminar_palabra():
+    por_eliminar = request.form['id_eliminar']
+    diccionario_collection.delete_one({"_id": int(por_eliminar)})
+    return redirect('/')
+
+@app.route('/listado')
+def listado_palabras():
+    palabras = diccionario_collection.find()
+    return render_template('listado.html', palabras=palabras)
+
+@app.route('/buscar')
+def buscar_significado():
+    palabras = diccionario_collection.find()
+    return render_template('buscar.html', palabras=palabras)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+# Cerrar la conexión a MongoDB (opcional en este caso)
+client.close()

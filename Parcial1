@@ -1,0 +1,83 @@
+import sqlite3
+
+conn = sqlite3.connect('inventario.db')
+
+while True:
+   print("\n====Inventario=====")
+   print("1. Registrar")
+   print("2. Buscar")
+   print("3. Editar")
+   print("4. Eliminar")
+   print("5. Salir")
+   print("0. Crear Base de Datos")
+
+   try:
+      opcion = int(input("\nOpcion: "))
+   except:
+      opcion = 1000
+    
+   if opcion == 1:
+        print("\n Agregar nuevo producto")
+        id = input("ID: ")
+        product = input("Nombre del producto nuevo: ")
+        tipo = input("Tipo: ")
+        valor = input("Valor: ")
+        conn.execute("INSERT INTO PRODUCTO(ID,NOMBRE, TIPO, CANTIDAD) VALUES("+id+",\""+product+"\",\""+tipo+"\", \""+valor+"\")")
+        conn.commit()
+
+   elif opcion == 2:
+        print("\n Ver inventario")
+        cursor = conn.execute("SELECT ID, NOMBRE, TIPO,CANTIDAD FROM PRODUCTO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]))     
+
+   elif opcion == 3:
+        print("\n Editar producto del inventario")
+        cursor = conn.execute("SELECT ID, NOMBRE FROM PRODUCTO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]))
+        por_actualizar = input("Inserte ID de la palabra por actualizar... ")
+        nueva_palabra = input("Inserte la nueva NOMBRE... ")
+        nuevo_significado = input("Inserte TIPO: ")
+        conn.execute("UPDATE PRODUCTO SET NOMBRE = ?,TIPO=? WHERE ID=?",(nueva_palabra,nuevo_significado,por_actualizar))
+        conn.commit() 
+        
+   elif opcion == 4:
+        print("\n Eliminar palabra existente")
+        cursor = conn.execute("SELECT ID, NOMBRE FROM PRODUCTO")
+        for row in cursor:
+            print(str(row[0])+". "+str(row[1]))
+        try:
+            por_eliminar = int(input("Inserte ID la PALABRA a borrar... "))
+        except:
+            por_eliminar = 999999
+        conn.execute("DELETE FROM PRODUCTO WHERE ID = " + str(por_eliminar ))
+        conn.commit()             
+
+   elif opcion == 0:
+      print("\nCrear estructura de base de datos")
+
+      conn.execute('''CREATE TABLE IF NOT EXISTS PRODUCTO
+                   (ID INT PRIMARY KEY NOT NULL,
+                    NOMBRE TEXT NOT NULL,
+                    TIPO TEXT,
+                    CANTIDAD INT);''')
+      
+
+    
+      
+
+   elif opcion == 5: 
+       print("\n Salir")
+       break
+
+
+           
+
+    
+    
+else:
+    print("\nERR: Opcion no valida")
+    
+    
+conn.close()
